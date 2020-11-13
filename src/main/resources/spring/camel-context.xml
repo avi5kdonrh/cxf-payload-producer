@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:cxf="http://camel.apache.org/schema/cxf"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/cxf http://camel.apache.org/schema/cxf/camel-cxf.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <cxf:cxfEndpoint address="http://169.254.154.214:8090/test"
+                              endpointName="xsd:WsImplPort"
+                              id="testEp" serviceName="xsd:WsImplService"
+                              wsdlURL="http://169.254.154.214:8090/test?wsdl" xmlns:xsd="http://example.org/" >
+            <cxf:properties>
+                <entry key="dataFormat" value="PAYLOAD"/>
+                <!-- <entry key="defaultOperationNamespace" value="http://schemas.navitaire.com/WebServices"/>
+                <entry key="defaultOperationName" value="Logon"/> -->
+            </cxf:properties>
+        </cxf:cxfEndpoint>
+    <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring" streamCache="true" loadTypeConverters="true">
+    <route>
+        <from uri="timer:timer1?period=20000"/>
+        <process ref="proc"/>
+        <setHeader headerName="operationNamespace">
+            <constant>http://example.org/</constant>
+        </setHeader>
+        <setHeader headerName="operationName">
+            <constant>test</constant>
+        </setHeader>
+        <!--<process ref="type"/>-->
+        <bean id="type123" ref="type"/>
+        <log message="body is ::: ${body}"/>
+        <to uri="cxf:bean:testEp?defaultOperationName=test&amp;defaultOperationNamespace=http://example.org"/>
+    </route>
+    </camelContext>
+    <bean id="proc" class="org.example.PayloadProcessor"/>
+    <bean id="type" class="org.example.TypeProcessor"/>
+    <bean id="payloadConverter" class="org.example.AdditionalCxfPayloadConverters"/>
+</beans>
